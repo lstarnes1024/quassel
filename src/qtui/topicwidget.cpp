@@ -155,7 +155,7 @@ void TopicWidget::setTopic(const QModelIndex& index)
     QString sanitizedNewTopic = sanitizeTopic(newtopic);
     if (ui.stackedWidget->currentIndex() != 1 || sanitizedNewTopic != _topic)
     {
-        _topic = sanitizeTopic(newtopic);
+        _topic = sanitizedNewTopic;
         _readonly = readonly;
 
         ui.topicEditButton->setVisible(!_readonly);
