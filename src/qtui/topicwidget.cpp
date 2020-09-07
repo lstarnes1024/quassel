@@ -153,7 +153,7 @@ void TopicWidget::setTopic(const QModelIndex& index)
     }
 
     QString sanitizedNewTopic = sanitizeTopic(newtopic);
-    if (ui.stackedWidget->currentIndex() != 1 || sanitizedNewTopic != _topic)
+    if (readonly != _readonly || sanitizedNewTopic != _topic)
     {
         _topic = sanitizedNewTopic;
         _readonly = readonly;
