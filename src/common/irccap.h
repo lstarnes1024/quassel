@@ -49,6 +49,13 @@ namespace IrcCap {
     const uint ACCOUNT_NOTIFY_WHOX_NUM = 369;
 
     /**
+     * Send account information as a tag with all commands sent by a user.
+     *
+     * http://ircv3.net/specs/extensions/account-notify-3.1.html
+     */
+    const QString ACCOUNT_TAG = "account-tag";
+
+    /**
      * Away change notification.
      *
      * http://ircv3.net/specs/extensions/away-notify-3.1.html
@@ -73,11 +80,32 @@ namespace IrcCap {
     const QString CHGHOST = "chghost";
 
     /**
+     * Server sending own messages back.
+     *
+     * https://ircv3.net/specs/extensions/echo-message-3.2.html
+     */
+    const QString ECHO_MESSAGE = "echo-message";
+
+    /**
      * Extended join information.
      *
      * http://ircv3.net/specs/extensions/extended-join-3.1.html
      */
     const QString EXTENDED_JOIN = "extended-join";
+
+    /**
+     * Standardized invite notifications.
+     *
+     * https://ircv3.net/specs/extensions/invite-notify-3.2
+     */
+    const QString INVITE_NOTIFY = "invite-notify";
+
+    /**
+     * Additional metadata on a per-message basis
+     *
+     * https://ircv3.net/specs/extensions/message-tags
+     */
+    const QString MESSAGE_TAGS = "message-tags";
 
     /**
      * Multiple mode prefixes in MODE and WHO replies.
@@ -92,6 +120,13 @@ namespace IrcCap {
      * http://ircv3.net/specs/extensions/sasl-3.2.html
      */
     const QString SASL = "sasl";
+
+    /**
+     * Allows updating realname without reconnecting
+     *
+     * https://ircv3.net/specs/extensions/setname
+     */
+    const QString SETNAME = "setname";
 
     /**
      * Userhost in names replies.
@@ -141,12 +176,17 @@ namespace IrcCap {
      * List of capabilities currently implemented and requested during capability negotiation.
      */
     const QStringList knownCaps = QStringList{ACCOUNT_NOTIFY,
+                                              ACCOUNT_TAG,
                                               AWAY_NOTIFY,
                                               CAP_NOTIFY,
                                               CHGHOST,
+                                              //ECHO_MESSAGE, // Postponed for message pending UI with batch + labeled-response
                                               EXTENDED_JOIN,
+                                              INVITE_NOTIFY,
+                                              MESSAGE_TAGS,
                                               MULTI_PREFIX,
                                               SASL,
+                                              SETNAME,
                                               USERHOST_IN_NAMES,
                                               SERVER_TIME,
                                               Vendor::TWITCH_MEMBERSHIP,

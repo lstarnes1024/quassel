@@ -183,14 +183,16 @@ void CoreUserInputHandler::handleCtcp(const BufferInfo& bufferInfo, const QStrin
 
     // FIXME make this a proper event
     coreNetwork()->coreSession()->ctcpParser()->query(coreNetwork(), nick, ctcpTag, message);
-    emit displayMsg(NetworkInternalMessage(
-        Message::Action,
-        BufferInfo::StatusBuffer,
-        "",
-        verboseMessage,
-        network()->myNick(),
-        Message::Flag::Self
-    ));
+    if (!network()->capEnabled(IrcCap::ECHO_MESSAGE)) {
+        emit displayMsg(NetworkInternalMessage(
+            Message::Action,
+            BufferInfo::StatusBuffer,
+            "",
+            verboseMessage,
+            network()->myNick(),
+            Message::Flag::Self
+        ));
+    }
 }
 
 void CoreUserInputHandler::handleDelkey(const BufferInfo& bufferInfo, const QString& msg)
@@ -510,14 +512,16 @@ void CoreUserInputHandler::handleMe(const BufferInfo& bufferInfo, const QString&
     for (const auto& message : messages) {
         // Handle each separated message independently
         coreNetwork()->coreSession()->ctcpParser()->query(coreNetwork(), bufferInfo.bufferName(), "ACTION", message);
-        emit displayMsg(NetworkInternalMessage(
-            Message::Action,
-            bufferInfo.type(),
-            bufferInfo.bufferName(),
-            message,
-            network()->myNick(),
-            Message::Self
-        ));
+        if (!network()->capEnabled(IrcCap::ECHO_MESSAGE)) {
+            emit displayMsg(NetworkInternalMessage(
+                Message::Action,
+                bufferInfo.type(),
+                bufferInfo.bufferName(),
+                message,
+                network()->myNick(),
+                Message::Self
+            ));
+        }
     }
 }
 
@@ -590,14 +594,16 @@ void CoreUserInputHandler::handleNotice(const BufferInfo& bufferInfo, const QStr
         params.clear();
         params << serverEncode(bufferName) << channelEncode(bufferInfo.bufferName(), message);
         emit putCmd("NOTICE", params);
-        emit displayMsg(NetworkInternalMessage(
-            Message::Notice,
-            typeByTarget(bufferName),
-            bufferName,
-            message,
-            network()->myNick(),
-            Message::Self
-        ));
+        if (!network()->capEnabled(IrcCap::ECHO_MESSAGE)) {
+            emit displayMsg(NetworkInternalMessage(
+                Message::Notice,
+                typeByTarget(bufferName),
+                bufferName,
+                message,
+                network()->myNick(),
+                Message::Self
+            ));
+        }
     }
 }
 
@@ -680,14 +686,16 @@ void CoreUserInputHandler::handleQuery(const BufferInfo& bufferInfo, const QStri
             // handleMsg is a no-op if message is empty
         }
         else {
-            emit displayMsg(NetworkInternalMessage(
-                Message::Plain,
-                BufferInfo::QueryBuffer,
-                target,
-                message,
-                network()->myNick(),
-                Message::Self
-            ));
+            if (!network()->capEnabled(IrcCap::ECHO_MESSAGE)) {
+                emit displayMsg(NetworkInternalMessage(
+                    Message::Plain,
+                    BufferInfo::QueryBuffer,
+                    target,
+                    message,
+                    network()->myNick(),
+                    Message::Self
+                ));
+            }
             // handleMsg needs the target specified at the beginning of the message
             handleMsg(bufferInfo, target + " " + message);
         }
@@ -731,14 +739,16 @@ void CoreUserInputHandler::handleSay(const BufferInfo& bufferInfo, const QString
 #else
         putPrivmsg(bufferInfo.bufferName(), message, encodeFunc);
 #endif
-        emit displayMsg(NetworkInternalMessage(
-            Message::Plain,
-            bufferInfo.type(),
-            bufferInfo.bufferName(),
-            message,
-            network()->myNick(),
-            Message::Self
-        ));
+        if (!network()->capEnabled(IrcCap::ECHO_MESSAGE)) {
+            emit displayMsg(NetworkInternalMessage(
+                Message::Plain,
+                bufferInfo.type(),
+                bufferInfo.bufferName(),
+                message,
+                network()->myNick(),
+                Message::Self
+            ));
+        }
     }
 }
 
@@ -769,7 +779,8 @@ void CoreUserInputHandler::handleSetkey(const BufferInfo& bufferInfo, const QStr
             typeByTarget(bufname),
             bufname,
             tr("[usage] /setkey <nick|channel> <key> sets the encryption key for nick or channel. "
-               "/setkey <key> when in a channel or query buffer sets the key for it.")
+               "/setkey <key> when in a channel or query buffer sets the key for it. "
+               "Prefix <key> by cbc: or ebc: to explicitly set the encryption mode respectively. Default is CBC.")
         ));
         return;
     }
@@ -796,6 +807,12 @@ void CoreUserInputHandler::handleSetkey(const BufferInfo& bufferInfo, const QStr
            "support, or rebuild Quassel with QCA present.")
     ));
 #endif
+}
+
+void CoreUserInputHandler::handleSetname(const BufferInfo& bufferInfo, const QString& msg)
+{
+    Q_UNUSED(bufferInfo)
+    emit putCmd("SETNAME", serverEncode(msg));
 }
 
 void CoreUserInputHandler::handleShowkey(const BufferInfo& bufferInfo, const QString& msg)

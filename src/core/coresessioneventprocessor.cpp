@@ -361,6 +361,10 @@ void CoreSessionEventProcessor::processIrcEventChghost(IrcEvent* e)
     }
 }
 
+// IRCv3 INVITE - ":<inviter> INVITE <target> <channel>"
+// Example:  :ChanServ!ChanServ@example.com INVITE Attila #channel
+//
+// See https://ircv3.net/specs/extensions/invite-notify-3.2
 void CoreSessionEventProcessor::processIrcEventInvite(IrcEvent* e)
 {
     if (checkParamCount(e, 2)) {
@@ -786,6 +790,25 @@ void CoreSessionEventProcessor::processIrcEventError(IrcEvent* e)
         // During QUIT, the server should send an error (often, but not always, "Closing Link"). As
         // we're expecting it, don't show this to the user.
         e->setFlag(EventManager::Silent);
+    }
+}
+
+
+// IRCv3 SETNAME - ":nick!user@host SETNAME :realname goes here"
+// Example:  :batman!~batman@bat.cave SETNAME :Bruce Wayne <bruce@wayne.enterprises>
+//
+// See https://ircv3.net/specs/extensions/setname
+void CoreSessionEventProcessor::processIrcEventSetname(IrcEvent* e)
+{
+    if (checkParamCount(e, 1)) {
+        IrcUser* ircuser = e->network()->updateNickFromMask(e->prefix());
+        if (!ircuser) {
+            qWarning() << Q_FUNC_INFO << "Unknown IrcUser!";
+            return;
+        }
+
+        QString newname = e->params().at(0);
+        ircuser->setRealName(newname);
     }
 }
 

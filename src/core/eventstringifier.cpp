@@ -251,7 +251,18 @@ void EventStringifier::processIrcEventNumeric(IrcEventNumeric* e)
 
 void EventStringifier::processIrcEventInvite(IrcEvent* e)
 {
-    displayMsg(e, Message::Invite, tr("%1 invited you to channel %2").arg(e->nick(), e->params().at(1)));
+    if (!checkParamCount(e, 2))
+        return;
+
+    // TODO: provide a nicer UI for invite notifications
+    QString target = e->params().at(0);
+    QString channel = e->params().at(1);
+    if (e->network()->isMyNick(target)) {
+        displayMsg(e, Message::Invite, tr("%1 invited you to channel %2").arg(e->nick(), channel));
+    }
+    else {
+        displayMsg(e, Message::Invite, tr("%1 invited %2 to channel %3").arg(e->nick(), target, channel));
+    }
 }
 
 void EventStringifier::processIrcEventJoin(IrcEvent* e)
@@ -790,7 +801,12 @@ void EventStringifier::processCtcpEvent(CtcpEvent* e)
     if (e->type() != EventManager::CtcpEvent)
         return;
 
-    if (e->testFlag(EventManager::Self)) {
+    // Only stringify outgoing CTCP messages this way
+    if (e->testFlag(EventManager::Self) &&
+        // Only stringify CTCP queries this way
+        e->ctcpType() == CtcpEvent::CtcpType::Query &&
+        // Always handle ACTIONs as if they were sent from network, to properly handle echo-message
+        e->ctcpCmd() != "ACTION") {
         displayMsg(e,
                    Message::Action,
                    tr("sending CTCP-%1 request to %2").arg(e->ctcpCmd(), e->target()),
@@ -812,14 +828,24 @@ void EventStringifier::defaultHandler(const QString& ctcpCmd, CtcpEvent* e)
             //: Optional "unknown" in "Received unknown CTCP-FOO request by bar"
             unknown = tr("unknown") + ' ';
         displayMsg(e, Message::Server, tr("Received %1CTCP-%2 request by %3").arg(unknown, e->ctcpCmd(), e->prefix()));
-        return;
+    } else {
+        // Ignore echo messages for our own answers
+        if (!e->testFlag(EventManager::Self)) {
+            displayMsg(e, Message::Server,
+                       tr("Received CTCP-%1 answer from %2: %3").arg(e->ctcpCmd(), nickFromMask(e->prefix()),e->param()));
+        }
     }
-    displayMsg(e, Message::Server, tr("Received CTCP-%1 answer from %2: %3").arg(e->ctcpCmd(), nickFromMask(e->prefix()), e->param()));
 }
 
 void EventStringifier::handleCtcpAction(CtcpEvent* e)
 {
-    displayMsg(e, Message::Action, e->param(), e->prefix(), e->target());
+    Message::Flag msgFlags = Message::Flag::None;
+    if (e->testFlag(EventManager::Self)) {
+        // Mark the message as Self
+        msgFlags = Message::Self;
+    }
+
+    displayMsg(e, Message::Action, e->param(), e->prefix(), e->target(), msgFlags);
 }
 
 void EventStringifier::handleCtcpPing(CtcpEvent* e)
